@@ -26,11 +26,17 @@ var NAVTREE =
 [
   [ "Malware Development Kit", "index.html", [
     [ "README", "md_README.html", null ],
+    [ "Classes", "annotated.html", [
+      [ "Class List", "annotated.html", "annotated_dup" ],
+      [ "Class Index", "classes.html", null ]
+    ] ],
     [ "Files", "files.html", [
       [ "File List", "files.html", "files_dup" ],
       [ "File Members", "globals.html", [
-        [ "All", "globals.html", null ],
-        [ "Functions", "globals_func.html", null ]
+        [ "All", "globals.html", "globals_dup" ],
+        [ "Functions", "globals_func.html", null ],
+        [ "Typedefs", "globals_type.html", null ],
+        [ "Macros", "globals_defs.html", "globals_defs" ]
       ] ]
     ] ]
   ] ]
@@ -38,7 +44,9 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"Mdk_8h.html"
+"Mdk_8h.html",
+"Mdk_8h.html#a5cdf618ccba234a47a4a6e540378632e",
+"Mdk_8h.html#ac4c0bb6b86c3629a6ef3999779bf412a"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
