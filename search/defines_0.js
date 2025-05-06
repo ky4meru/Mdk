@@ -621,5 +621,6 @@ var searchData=
   ['mdk_5fhash_5fwininet_618',['MDK_HASH_Wininet',['../Mdk_8h.html#a17249aa70cd99084c5e0a121e2d69b41',1,'Mdk.h']]],
   ['mdk_5fhash_5fzwwaitforworkviaworkerfactory_619',['MDK_HASH_ZwWaitForWorkViaWorkerFactory',['../Mdk_8h.html#a4140b9fbae3a6d57fd2392631f7fa713',1,'Mdk.h']]],
   ['mdk_5fkey_620',['MDK_KEY',['../Mdk_8h.html#ab5ca6f6999f15086ba79801344a62216',1,'Mdk.h']]],
-  ['mdk_5fu_5fptr_621',['MDK_U_PTR',['../Mdk_8h.html#ae0e490d839210076576ee1453424b5f6',1,'Mdk.h']]]
+  ['mdk_5fntsyscall_621',['MDK_NTSYSCALL',['../Mdk_8h.html#add64378ffc52688634d0028a30eee263',1,'Mdk.h']]],
+  ['mdk_5fu_5fptr_622',['MDK_U_PTR',['../Mdk_8h.html#ae0e490d839210076576ee1453424b5f6',1,'Mdk.h']]]
 ];

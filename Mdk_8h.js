@@ -630,6 +630,7 @@ var Mdk_8h =
     [ "MDK_HASH_Wininet", "Mdk_8h.html#a17249aa70cd99084c5e0a121e2d69b41", null ],
     [ "MDK_HASH_ZwWaitForWorkViaWorkerFactory", "Mdk_8h.html#a4140b9fbae3a6d57fd2392631f7fa713", null ],
     [ "MDK_KEY", "Mdk_8h.html#ab5ca6f6999f15086ba79801344a62216", null ],
+    [ "MDK_NTSYSCALL", "Mdk_8h.html#add64378ffc52688634d0028a30eee263", null ],
     [ "MDK_U_PTR", "Mdk_8h.html#ae0e490d839210076576ee1453424b5f6", null ],
     [ "MDK_CURDIR", "Mdk_8h.html#a3c8fef6deb998bcabc63619b03456177", null ],
     [ "MDK_LDR_DATA_TABLE_ENTRY", "Mdk_8h.html#a0adaa26aceeba5643afb29a8e0cdfc18", null ],
