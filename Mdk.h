@@ -40,6 +40,28 @@ extern "C"
 #define MDK_U_PTR( x ) ( ( UINT_PTR ) ( x ) ) 
 
 /**
+ * @brief Gets a callable native syscall pointer.
+ * 
+ * As shown below, the returned function pointer is directly callable thanks to a generic cast.
+ * However, this generic cast forces to explicitly cast the value returned by the syscall (if any).
+ * 
+ * @code{.cpp}
+ * NTSTATUS status = (NTSTATUS)MDK_NTSYSCALL(NtDelayExecution)(FALSE, &delay);
+ * @endcode
+ * 
+ * For C programming compability, the syscall can not be cast to a fully variadic function, at least one argument must be provided.
+ * Therefore, in case the syscall do not take any argument, simply provide a dummy NULL value as parameter.
+ * 
+ * @code{.cpp}
+ * ULONG number = (ULONG)MDK_NTSYSCALL(NtGetCurrentProcessorNumber)(NULL);
+ * @endcode
+ * 
+ * @param s The name of the native syscall to get.
+ * @return Native syscall pointer that can be called.
+ */
+#define MDK_NTSYSCALL( s ) ( ( LPVOID ( * ) ( LPVOID, ... ) ) MdkGetProcAddressByHash( MdkGetModuleHandleByHash( MDK_HASH_Ntdll ), MDK_HASH_##s ) )
+
+/**
  * @brief The key used to encrypt string hashes.
  */
 #define MDK_KEY 0x12345678
@@ -3453,7 +3475,7 @@ VOID MdkCopyMemory(_In_ LPVOID dest, _In_ LPCVOID src, _In_ SIZE_T count)
  */
 MDK_PPEB MdkCurrentPeb(VOID)
 {
-#ifdef _WIN64
+#ifdef _M_X64
     return (MDK_PPEB)__readgsqword(0x60);
 #else
     return (MDK_PPEB)__readfsdword(0x30);
@@ -3467,7 +3489,7 @@ MDK_PPEB MdkCurrentPeb(VOID)
  */
 MDK_PTEB MdkCurrentTeb(VOID)
 {
-#ifdef _WIN64
+#ifdef _M_X64
     return (MDK_PTEB)__readgsqword(0x30);
 #else
     return (MDK_PTEB)__readfsdword(0x18);
@@ -3664,22 +3686,22 @@ LPVOID MdkFindGadgetA(_In_ LPBYTE module, _In_ LPCSTR gadget, _In_ SIZE_T count)
  */
 LPVOID MdkGetModuleHandleByHash(_In_ DWORD hash)
 {
-	MDK_PPEB peb = MdkCurrentPeb();
-	PLIST_ENTRY	hdr = &peb->Ldr->InLoadOrderModuleList;
-	PLIST_ENTRY ent = hdr->Flink;
-	MDK_PLDR_DATA_TABLE_ENTRY ldr = NULL;
+    MDK_PPEB peb = MdkCurrentPeb();
+    PLIST_ENTRY	hdr = &peb->Ldr->InLoadOrderModuleList;
+    PLIST_ENTRY ent = hdr->Flink;
+    MDK_PLDR_DATA_TABLE_ENTRY ldr = NULL;
 
-	for (; hdr != ent; ent = ent->Flink)
+    for (; hdr != ent; ent = ent->Flink)
     {
         ldr = (MDK_PLDR_DATA_TABLE_ENTRY)ent;
 
-		if (MdkHashString(ldr->BaseDllName.Buffer, ldr->BaseDllName.Length) == (hash ^ MDK_KEY))
+        if (MdkHashString(ldr->BaseDllName.Buffer, ldr->BaseDllName.Length) == (hash ^ MDK_KEY))
         {
-			return ldr->DllBase;
-		}
-	}
-
-	return NULL;
+            return ldr->DllBase;
+        }
+    }
+    
+    return NULL;
 }
 
 /**
@@ -3691,34 +3713,45 @@ LPVOID MdkGetModuleHandleByHash(_In_ DWORD hash)
  */
 LPVOID MdkGetProcAddressByHash(_In_ LPVOID module, _In_ DWORD hash)
 {
-	PUINT16	aoo = NULL;
-	PUINT32	aof = NULL;
-	PUINT32	aon = NULL;
+    PUINT16	aoo = NULL;
+    PUINT32	aof = NULL;
+    PUINT32	aon = NULL;
     PIMAGE_DOS_HEADER hdr = (PIMAGE_DOS_HEADER)module;
     PIMAGE_NT_HEADERS nth = (PIMAGE_NT_HEADERS)(MDK_U_PTR(hdr) + hdr->e_lfanew);
-	PIMAGE_DATA_DIRECTORY dir = &nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-	PIMAGE_EXPORT_DIRECTORY	exp = NULL;
+    PIMAGE_DATA_DIRECTORY dir = &nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+    PIMAGE_EXPORT_DIRECTORY	exp = NULL;
 
-	if (dir->VirtualAddress)
+    if (dir->VirtualAddress)
     {
         exp = (PIMAGE_EXPORT_DIRECTORY)(MDK_U_PTR(hdr) + dir->VirtualAddress);
         aon = (PUINT32)(MDK_U_PTR(hdr) + exp->AddressOfNames);
         aof = (PUINT32)(MDK_U_PTR(hdr) + exp->AddressOfFunctions);
         aoo = (PUINT16)(MDK_U_PTR(hdr) + exp->AddressOfNameOrdinals);
 
-		for (DWORD i = 0; i < exp->NumberOfNames; ++i)
+        for (DWORD i = 0; i < exp->NumberOfNames; ++i)
         {
             if (MdkHashString(MDK_C_PTR(MDK_U_PTR(hdr) + aon[i]), 0) == (hash ^ MDK_KEY))
             {
-				return MDK_C_PTR(MDK_U_PTR(hdr) + aof[aoo[i]]);
-			}
-		}
-	}
-
-	return NULL;
+                return MDK_C_PTR(MDK_U_PTR(hdr) + aof[aoo[i]]);
+            }
+        }
+    }
+    
+    return NULL;
 }
 
-#define MdkNtDelayExecution ( ( NTSTATUS ( * ) ( BOOLEAN, PLARGE_INTEGER ) ) MdkGetProcAddressByHash( MdkGetModuleHandleByHash( MDK_HASH_Ntdll ), MDK_HASH_NtDelayExecution ) )
+LPVOID MdkGetSyscallInstruction(LPVOID addr)
+{
+    for (DWORD i = 0; i < 500; ++i)
+    {
+        if (((PBYTE)addr + i)[0] == 0x0F && ((PBYTE)addr + i)[1] == 0x05)
+        {
+            return (PVOID)((PBYTE)addr + i);
+        }
+    }
+
+    return NULL;
+}
 
 #ifdef __cplusplus
 }
